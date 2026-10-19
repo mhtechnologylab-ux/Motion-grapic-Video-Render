@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   AbsoluteFill,
-  interpolate,
   spring,
   useCurrentFrame,
   useVideoConfig,
@@ -9,9 +8,9 @@ import {
 
 export const VIDEO_CONFIG = {
   fps: 30,
-  durationInFrames: 150, // 5 seconds
-  width: 1920,
-  height: 1080,
+  durationInFrames: 150, 
+  width: 1080,   // Change to 1920 for YouTube (16:9), or keep 1080 for Shorts/Reels (9:16)
+  height: 1920,  // Change to 1080 for YouTube (16:9), or keep 1920 for Shorts/Reels (9:16)
 };
 
 export const MainVideo: React.FC = () => {
@@ -36,18 +35,18 @@ export const MainVideo: React.FC = () => {
       <div
         style={{
           transform: `scale(${scale})`,
-          padding: '40px 80px',
+          padding: '40px',
           borderRadius: '30px',
           background: 'rgba(255, 255, 255, 0.07)',
           border: '2px solid rgba(99, 102, 241, 0.6)',
-          boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)',
           textAlign: 'center',
+          maxWidth: '85%',
         }}
       >
-        <h1 style={{ color: '#ffffff', fontSize: '72px', margin: 0, fontWeight: 900 }}>
+        <h1 style={{ color: '#ffffff', fontSize: '60px', margin: 0, fontWeight: 900 }}>
           MH Motion Studio
         </h1>
-        <p style={{ color: '#818cf8', fontSize: '30px', marginTop: '15px' }}>
+        <p style={{ color: '#818cf8', fontSize: '26px', marginTop: '15px' }}>
           Rendered via GitHub Actions on Mobile
         </p>
       </div>
