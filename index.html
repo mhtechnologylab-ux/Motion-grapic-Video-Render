@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0">
+  <title>সফলতার ৫ টি ধাপ - 1080x1920 Motion Graphics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+      background: #0f172a;
+    }
+
+    /* Native 1080x1920 Canvas for Renderers */
+    .reel-canvas {
+      width: 1080px;
+      height: 1920px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #d1fae5 0%, #ede9fe 50%, #fef3c7 100%);
+    }
+
+    /* Ambient Pastel Mesh Blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(110px);
+      opacity: 0.7;
+      z-index: 1;
+    }
+    .blob-1 { width: 650px; height: 650px; background: #6ee7b7; top: -120px; left: -120px; }
+    .blob-2 { width: 720px; height: 720px; background: #c4b5fd; bottom: 150px; right: -140px; }
+    .blob-3 { width: 520px; height: 520px; background: #fde68a; top: 38%; left: 18%; }
+
+    /* Top Progress Bar */
+    .progress-wrap {
+      position: absolute;
+      top: 48px;
+      left: 60px;
+      right: 60px;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.55);
+      border-radius: 20px;
+      z-index: 20;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #10b981, #6366f1);
+      border-radius: 20px;
+    }
+
+    /* Main Center Stage */
+    .stage {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 75px;
+    }
+
+    /* Glassmorphic UI Card */
+    .glass-card {
+      width: 930px;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 4px solid rgba(255, 255, 255, 0.92);
+      border-radius: 68px;
+      padding: 85px 60px;
+      box-shadow: 0 45px 95px rgba(15, 23, 42, 0.12);
+      text-align: center;
+      position: absolute;
+      opacity: 0;
+    }
+
+    .step-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 36px;
+      padding: 14px 44px;
+      border-radius: 999px;
+      margin-bottom: 42px;
+      letter-spacing: 1px;
+      box-shadow: 0 14px 30px rgba(16, 185, 129, 0.28);
+    }
+
+    .icon-wrap {
+      width: 240px;
+      height: 240px;
+      margin: 0 auto 44px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 165px;
+      filter: drop-shadow(0 28px 36px rgba(0, 0, 0, 0.14));
+    }
+
+    .card-title {
+      font-size: 76px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.25;
+      margin-bottom: 24px;
+    }
+
+    .card-desc {
+      font-size: 46px;
+      color: #475569;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    /* Bottom Kinetic SRT Subtitle Container */
+    .subtitle-container {
+      position: absolute;
+      bottom: 135px;
+      left: 65px;
+      right: 65px;
+      z-index: 30;
+      display: flex;
+      justify-content: center;
+    }
+    .subtitle-pill {
+      background: rgba(15, 23, 42, 0.92);
+      color: #f8fafc;
+      padding: 30px 56px;
+      border-radius: 42px;
+      font-size: 50px;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+      border: 3px solid rgba(255, 255, 255, 0.18);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="reel-canvas" id="reelCanvas">
+    <!-- Floating Mesh Gradient Blobs -->
+    <div class="blob blob-1" id="blob1"></div>
+    <div class="blob blob-2" id="blob2"></div>
+    <div class="blob blob-3" id="blob3"></div>
+
+    <!-- Top Progress Bar -->
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Scene Cards Stage -->
+    <div class="stage">
+      <!-- Scene 1: Hook (0.0 - 3.5s) -->
+      <div class="glass-card" id="scene-1">
+        <div class="step-badge">MINDSET SHIFT</div>
+        <div class="icon-wrap">🚀</div>
+        <div class="card-title">সফল হতে চান?</div>
+        <div class="card-desc">লক্ষ্য অর্জনের গোপন রোডম্যাপ</div>
+      </div>
+
+      <!-- Scene 2: Problem (3.5 - 6.0s) -->
+      <div class="glass-card" id="scene-2">
+        <div class="step-badge" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">PROBLEM</div>
+        <div class="icon-wrap">⏳</div>
+        <div class="card-title">সময় নষ্ট হচ্ছে?</div>
+        <div class="card-desc">সঠিক গাইডলাইনের অভাবে অনেকেই থেমে যায়</div>
+      </div>
+
+      <!-- Scene 3: Step 1 (6.0 - 10.0s) -->
+      <div class="glass-card" id="scene-3">
+        <div class="step-badge">STEP 01</div>
+        <div class="icon-wrap">🎯</div>
+        <div class="card-title">১. স্পষ্ট লক্ষ্য</div>
+        <div class="card-desc">আপনি ঠিক কোথায় পৌঁছাতে চান তা লিখে ফেলুন</div>
+      </div>
+
+      <!-- Scene 4: Step 2 (10.0 - 13.0s) -->
+      <div class="glass-card" id="scene-4">
+        <div class="step-badge" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">STEP 02</div>
+        <div class="icon-wrap">📅</div>
+        <div class="card-title">২. প্রতিদিন কাজ করুন</div>
+        <div class="card-desc">ছোট ছোট পদক্ষেপে প্রতিদিন এগিয়ে যান</div>
+      </div>
+
+      <!-- Scene 5: Step 3 (13.0 - 16.0s) -->
+      <div class="glass-card" id="scene-5">
+        <div class="step-badge" style="background: linear-gradient(135deg, #f59e0b, #d97706);">STEP 03</div>
+        <div class="icon-wrap">🧠</div>
+        <div class="card-title">৩. ভুল থেকে শিখুন</div>
+        <div class="card-desc">ব্যর্থতা মানেই শেখার নতুন সুযোগ</div>
+      </div>
+
+      <!-- Scene 6: Step 4 (16.0 - 19.0s) -->
+      <div class="glass-card" id="scene-6">
+        <div class="step-badge" style="background: linear-gradient(135deg, #14b8a6, #0d9488);">STEP 04</div>
+        <div class="icon-wrap">🌱</div>
+        <div class="card-title">৪. ধৈর্য ধরুন</div>
+        <div class="card-desc">বড় অর্জনে সময়ের প্রয়োজন হয়</div>
+      </div>
+
+      <!-- Scene 7: Step 5 (19.0 - 23.0s) -->
+      <div class="glass-card" id="scene-7">
+        <div class="step-badge" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">STEP 05</div>
+        <div class="icon-wrap">✨</div>
+        <div class="card-title">৫. আত্মবিশ্বাস রাখুন</div>
+        <div class="card-desc">নিজের ওপর বিশ্বাসই আপনাকে জয়ী করবে</div>
+      </div>
+
+      <!-- Scene 8: CTA (23.0 - 30.0s) -->
+      <div class="glass-card" id="scene-8">
+        <div class="step-badge" style="background: linear-gradient(135deg, #ec4899, #db2777);">ACTION TIME</div>
+        <div class="icon-wrap">🔔</div>
+        <div class="card-title">আজই শুরু করুন!</div>
+        <div class="card-desc">নিয়মিত টিপস পেতে ফলো ও সাবস্ক্রাইব করুন</div>
+      </div>
+    </div>
+
+    <!-- SRT Kinetic Subtitle Display -->
+    <div class="subtitle-container">
+      <div class="subtitle-pill" id="srt-caption">সফল হতে চান?</div>
+    </div>
+  </div>
+
+  <script>
+    // Embedded SRT Data (from bangla-srt-generator)
+    const srtSubtitles = [
+      { start: 0.0, end: 3.5, text: "সফল হতে চান?" },
+      { start: 3.5, end: 6.0, text: "সঠিক ধাপগুলো জানেন কি?" },
+      { start: 6.0, end: 10.0, text: "১. স্পষ্ট লক্ষ্য ঠিক করুন।" },
+      { start: 10.0, end: 13.0, text: "২. প্রতিদিন কাজ করুন।" },
+      { start: 13.0, end: 16.0, text: "৩. ভুল থেকে শিখুন।" },
+      { start: 16.0, end: 19.0, text: "৪. ধৈর্য ধরুন।" },
+      { start: 19.0, end: 23.0, text: "৫. নিজের ওপর বিশ্বাস রাখুন।" },
+      { start: 23.0, end: 27.0, text: "আজ থেকেই শুরু করুন!" },
+      { start: 27.0, end: 30.0, text: "ফলো বা সাবস্ক্রাইব করুন।" }
+    ];
+
+    const scenes = [
+      { id: "#scene-1", start: 0.0, end: 3.5 },
+      { id: "#scene-2", start: 3.5, end: 6.0 },
+      { id: "#scene-3", start: 6.0, end: 10.0 },
+      { id: "#scene-4", start: 10.0, end: 13.0 },
+      { id: "#scene-5", start: 13.0, end: 16.0 },
+      { id: "#scene-6", start: 16.0, end: 19.0 },
+      { id: "#scene-7", start: 19.0, end: 23.0 },
+      { id: "#scene-8", start: 23.0, end: 30.0 }
+    ];
+
+    window.DURATION = 30;
+    window.FPS = 30;
+    window.masterTimeline = gsap.timeline({ paused: false });
+
+    function buildTimeline() {
+      gsap.set(".glass-card", { opacity: 0, y: 110, scale: 0.9 });
+      gsap.set("#progressBar", { width: "0%" });
+
+      // Top Progress Bar across 30s
+      window.masterTimeline.to("#progressBar", {
+        width: "100%",
+        duration: 30,
+        ease: "none"
+      }, 0);
+
+      // Ambient Background Motion inside Master Timeline (Deterministic for Headless Render)
+      window.masterTimeline.to("#blob1", { x: 140, y: 90, duration: 15, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0);
+      window.masterTimeline.to("#blob2", { x: -120, y: -100, duration: 15, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0);
+      window.masterTimeline.to(".icon-wrap", { y: -22, duration: 1.25, yoyo: true, repeat: 23, ease: "sine.inOut" }, 0);
+
+      // Animate Each Glassmorphic Scene Card
+      scenes.forEach((scene) => {
+        window.masterTimeline.to(scene.id, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.5,
+          ease: "back.out(1.6)"
+        }, scene.start);
+
+        if (scene.end < 30) {
+          window.masterTimeline.to(scene.id, {
+            opacity: 0,
+            y: -90,
+            scale: 0.94,
+            duration: 0.38,
+            ease: "power2.in"
+          }, scene.end - 0.38);
+        }
+      });
+
+      // Subtitle Scale Pop on Each Cue
+      const pill = document.getElementById("srt-caption");
+      srtSubtitles.forEach((sub) => {
+        window.masterTimeline.fromTo(pill,
+          { scale: 0.86, opacity: 0.5 },
+          { scale: 1, opacity: 1, duration: 0.28, ease: "back.out(2)" },
+          sub.start
+        );
+      });
+    }
+
+    // Update Subtitle Text Deterministically at Any Timestamp
+    function updateSubtitleForTime(timeSec) {
+      const active = srtSubtitles.find(s => timeSec >= s.start && timeSec < s.end) || srtSubtitles[srtSubtitles.length - 1];
+      const pill = document.getElementById("srt-caption");
+      if (pill && pill.innerText !== active.text) {
+        pill.innerText = active.text;
+      }
+    }
+
+    // Hooks for Any GitHub Repo Renderer (seekTo / renderFrame / masterTimeline)
+    window.seekTo = function(timeInSeconds) {
+      window.masterTimeline.pause();
+      window.masterTimeline.seek(timeInSeconds, false);
+      updateSubtitleForTime(timeInSeconds);
+    };
+
+    window.renderFrame = function(frameNumber, fps = 30) {
+      const timeSec = frameNumber / fps;
+      window.seekTo(timeSec);
+    };
+
+    // Keep subtitles synced during normal live playback
+    gsap.ticker.add(() => {
+      if (window.masterTimeline && window.masterTimeline.isActive()) {
+        updateSubtitleForTime(window.masterTimeline.time());
+      }
+    });
+
+    buildTimeline();
+  </script>
+</body>
+</html>
