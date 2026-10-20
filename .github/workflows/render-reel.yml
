@@ -7,40 +7,215 @@ on:
 
 jobs:
   render-video:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install System Dependencies, FFmpeg & Bengali Fonts
+      - name: 1. Install FFmpeg, Chromium & Bengali Fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg fonts-beng fonts-noto-core fontconfig \
-            libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
-            libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2
+          sudo apt-get install -y ffmpeg fonts-beng fonts-noto-core fontconfig chromium-browser
           sudo fc-cache -fv
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: 2. Setup Python & Generate Voiceover + Asset ZIP
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
+          python-version: '3.11'
 
-      - name: Generate Bangla TTS Voiceover & Asset ZIP
+      - name: Run TTS & Asset Bundle Script
         run: |
+          python -m pip install --upgrade pip
           pip install edge-tts
           edge-tts --voice bn-BD-PradeepNeural \
             --text "আপনি কি এক বছরেও আপনার লক্ষ্য অর্জন করতে পারছেন না? কারণ আপনি সঠিক ধাপগুলো জানেন না! দেখে নিন সফলতার ৫টি শক্তিশালী ধাপ: এক, স্পষ্ট লক্ষ্য ঠিক করুন। দুই, প্রতিদিন কাজ করুন। তিন, ভুল থেকে শিখুন। চার, ধৈর্য ধরুন। পাঁচ, নিজের ওপর বিশ্বাস রাখুন। আজ থেকেই শুরু করুন! পেজটি ফলো বা সাবস্ক্রাইব করুন।" \
             --write-media voiceover.mp3 \
             --write-subtitles subtitles.srt
-          if [ -f "build_assets_zip.py" ]; then python3 build_assets_zip.py; fi
 
-      - name: Install Puppeteer & Render 1080x1920 MP4
+          cat << 'EOF' > make_assets.py
+          import json, zipfile
+          manifest = {
+            "project": "সফলতার ৫ টি ধাপ",
+            "resolution": "1080x1920",
+            "fps": 30,
+            "duration": 30
+          }
+          with zipfile.ZipFile("success_5_steps_assets.zip", "w") as zf:
+            zf.writestr("asset-manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
+            with open("subtitles.srt", "rb") as f:
+              zf.writestr("subtitles.srt", f.read())
+          EOF
+          python make_assets.py
+
+      - name: 3. Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 4. Generate HTML Animation & Render 1080x1920 MP4
         run: |
+          npm init -y
           npm install puppeteer
-          node render_video.js
 
-      - name: Upload Final MP4, SRT & Asset ZIP Bundle
+          cat << 'EOF' > reel_template.html
+          <!DOCTYPE html>
+          <html lang="bn">
+          <head>
+            <meta charset="UTF-8">
+            <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@500;600;700&display=swap" rel="stylesheet">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+            <style>
+              * { box-sizing: border-box; margin: 0; padding: 0; }
+              html, body {
+                width: 1080px; height: 1920px; overflow: hidden;
+                font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+              }
+              .reel-canvas {
+                width: 1080px; height: 1920px; position: relative; overflow: hidden;
+                background: linear-gradient(135deg, #d1fae5 0%, #ede9fe 50%, #fef3c7 100%);
+              }
+              .progress-wrap {
+                position: absolute; top: 48px; left: 60px; right: 60px; height: 14px;
+                background: rgba(255,255,255,0.55); border-radius: 20px; z-index: 20; overflow: hidden;
+              }
+              .progress-bar {
+                height: 100%; width: 0%;
+                background: linear-gradient(90deg, #10b981, #6366f1); border-radius: 20px;
+              }
+              .stage {
+                position: relative; z-index: 10; width: 100%; height: 100%;
+                display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 75px;
+              }
+              .glass-card {
+                width: 930px; background: rgba(255, 255, 255, 0.78);
+                border: 4px solid #ffffff; border-radius: 68px; padding: 85px 60px;
+                box-shadow: 0 40px 90px rgba(15, 23, 42, 0.12); text-align: center;
+                position: absolute; opacity: 0;
+              }
+              .step-badge {
+                display: inline-block; background: #10b981; color: #fff;
+                font-weight: 700; font-size: 36px; padding: 14px 44px; border-radius: 999px; margin-bottom: 42px;
+              }
+              .icon-wrap { font-size: 160px; margin-bottom: 40px; }
+              .card-title { font-size: 74px; font-weight: 700; color: #0f172a; margin-bottom: 24px; }
+              .card-desc { font-size: 44px; color: #475569; font-weight: 600; }
+              .subtitle-container {
+                position: absolute; bottom: 135px; left: 65px; right: 65px; z-index: 30;
+                display: flex; justify-content: center;
+              }
+              .subtitle-pill {
+                background: rgba(15, 23, 42, 0.92); color: #f8fafc;
+                padding: 30px 56px; border-radius: 42px; font-size: 48px; font-weight: 700; text-align: center;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="reel-canvas">
+              <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+              <div class="stage">
+                <div class="glass-card" id="scene-1"><div class="step-badge">MINDSET SHIFT</div><div class="icon-wrap">🚀</div><div class="card-title">সফল হতে চান?</div><div class="card-desc">লক্ষ্য অর্জনের গোপন রোডম্যাপ</div></div>
+                <div class="glass-card" id="scene-2"><div class="step-badge" style="background:#f43f5e">PROBLEM</div><div class="icon-wrap">⏳</div><div class="card-title">সময় নষ্ট হচ্ছে?</div><div class="card-desc">সঠিক গাইডলাইনের অভাবে অনেকেই থেমে যায়</div></div>
+                <div class="glass-card" id="scene-3"><div class="step-badge">STEP 01</div><div class="icon-wrap">🎯</div><div class="card-title">১. স্পষ্ট লক্ষ্য</div><div class="card-desc">আপনি ঠিক কোথায় পৌঁছাতে চান তা লিখে ফেলুন</div></div>
+                <div class="glass-card" id="scene-4"><div class="step-badge" style="background:#8b5cf6">STEP 02</div><div class="icon-wrap">📅</div><div class="card-title">২. প্রতিদিন কাজ করুন</div><div class="card-desc">ছোট ছোট পদক্ষেপে প্রতিদিন এগিয়ে যান</div></div>
+                <div class="glass-card" id="scene-5"><div class="step-badge" style="background:#f59e0b">STEP 03</div><div class="icon-wrap">🧠</div><div class="card-title">৩. ভুল থেকে শিখুন</div><div class="card-desc">ব্যর্থতা মানেই শেখার নতুন সুযোগ</div></div>
+                <div class="glass-card" id="scene-6"><div class="step-badge" style="background:#14b8a6">STEP 04</div><div class="icon-wrap">🌱</div><div class="card-title">৪. ধৈর্য ধরুন</div><div class="card-desc">বড় অর্জনে সময়ের প্রয়োজন হয়</div></div>
+                <div class="glass-card" id="scene-7"><div class="step-badge" style="background:#6366f1">STEP 05</div><div class="icon-wrap">✨</div><div class="card-title">৫. আত্মবিশ্বাস রাখুন</div><div class="card-desc">নিজের ওপর বিশ্বাসই আপনাকে জয়ী করবে</div></div>
+                <div class="glass-card" id="scene-8"><div class="step-badge" style="background:#ec4899">ACTION TIME</div><div class="icon-wrap">🔔</div><div class="card-title">আজই শুরু করুন!</div><div class="card-desc">নিয়মিত টিপস পেতে ফলো ও সাবস্ক্রাইব করুন</div></div>
+              </div>
+              <div class="subtitle-container"><div class="subtitle-pill" id="srt-caption">সফল হতে চান?</div></div>
+            </div>
+            <script>
+              const srtSubtitles = [
+                { start: 0.0, end: 3.5, text: "সফল হতে চান?" },
+                { start: 3.5, end: 6.0, text: "সঠিক ধাপগুলো জানেন কি?" },
+                { start: 6.0, end: 10.0, text: "১. স্পষ্ট লক্ষ্য ঠিক করুন।" },
+                { start: 10.0, end: 13.0, text: "২. প্রতিদিন কাজ করুন।" },
+                { start: 13.0, end: 16.0, text: "৩. ভুল থেকে শিখুন।" },
+                { start: 16.0, end: 19.0, text: "৪. ধৈর্য ধরুন।" },
+                { start: 19.0, end: 23.0, text: "৫. নিজের ওপর বিশ্বাস রাখুন।" },
+                { start: 23.0, end: 27.0, text: "আজ থেকেই শুরু করুন!" },
+                { start: 27.0, end: 30.0, text: "ফলো বা সাবস্ক্রাইব করুন।" }
+              ];
+              const scenes = [
+                { id: "#scene-1", start: 0.0, end: 3.5 },
+                { id: "#scene-2", start: 3.5, end: 6.0 },
+                { id: "#scene-3", start: 6.0, end: 10.0 },
+                { id: "#scene-4", start: 10.0, end: 13.0 },
+                { id: "#scene-5", start: 13.0, end: 16.0 },
+                { id: "#scene-6", start: 16.0, end: 19.0 },
+                { id: "#scene-7", start: 19.0, end: 23.0 },
+                { id: "#scene-8", start: 23.0, end: 30.0 }
+              ];
+              window.tl = gsap.timeline({ paused: true });
+              gsap.set(".glass-card", { opacity: 0, y: 100, scale: 0.9 });
+              window.tl.to("#progressBar", { width: "100%", duration: 30, ease: "none" }, 0);
+              scenes.forEach((s) => {
+                window.tl.to(s.id, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.5)" }, s.start);
+                if (s.end < 30) {
+                  window.tl.to(s.id, { opacity: 0, y: -80, scale: 0.95, duration: 0.35 }, s.end - 0.35);
+                }
+              });
+              window.seekTo = function(sec) {
+                window.tl.seek(sec, false);
+                const sub = srtSubtitles.find(x => sec >= x.start && sec < x.end) || srtSubtitles[srtSubtitles.length - 1];
+                document.getElementById("srt-caption").innerText = sub.text;
+              };
+            </script>
+          </body>
+          </html>
+          EOF
+
+          cat << 'EOF' > render_now.js
+          const puppeteer = require('puppeteer');
+          const { spawn } = require('child_process');
+          const path = require('path');
+
+          (async () => {
+            const FPS = 30;
+            const TOTAL_FRAMES = 30 * FPS;
+            const browser = await puppeteer.launch({
+              headless: "new",
+              args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            });
+            const page = await browser.newPage();
+            await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 1 });
+            await page.goto('file://' + path.resolve(__dirname, 'reel_template.html'), { waitUntil: 'networkidle0' });
+            await page.evaluateHandle('document.fonts.ready');
+
+            const ffmpeg = spawn('ffmpeg', [
+              '-y',
+              '-f', 'image2pipe',
+              '-vcodec', 'png',
+              '-r', String(FPS),
+              '-i', '-',
+              '-i', 'voiceover.mp3',
+              '-c:v', 'libx264',
+              '-pix_fmt', 'yuv420p',
+              '-preset', 'ultrafast',
+              '-crf', '20',
+              '-c:a', 'aac',
+              '-b:a', '192k',
+              '-shortest',
+              'success_5_steps_reel.mp4'
+            ]);
+
+            for (let i = 0; i < TOTAL_FRAMES; i++) {
+              await page.evaluate((t) => window.seekTo(t), i / FPS);
+              const shot = await page.screenshot({ type: 'png' });
+              ffmpeg.stdin.write(shot);
+              if (i % 150 === 0) console.log(`Rendered frame ${i}/${TOTAL_FRAMES}`);
+            }
+            ffmpeg.stdin.end();
+            await new Promise((r) => ffmpeg.on('close', r));
+            await browser.close();
+            console.log("Done rendering MP4!");
+          })();
+          EOF
+
+          node render_now.js
+
+      - name: 5. Upload Final MP4, SRT & Asset ZIP Bundle
         uses: actions/upload-artifact@v4
         with:
           name: Success-5-Steps-Bangla-Reel
