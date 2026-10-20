@@ -1,0 +1,51 @@
+name: Render Bangla Motion Graphics Video
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  render-video:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies, FFmpeg & Bengali Fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-beng fonts-noto-core fontconfig \
+            libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+            libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libasound2
+          sudo fc-cache -fv
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate Bangla TTS Voiceover & Asset ZIP
+        run: |
+          pip install edge-tts
+          edge-tts --voice bn-BD-PradeepNeural \
+            --text "আপনি কি এক বছরেও আপনার লক্ষ্য অর্জন করতে পারছেন না? কারণ আপনি সঠিক ধাপগুলো জানেন না! দেখে নিন সফলতার ৫টি শক্তিশালী ধাপ: এক, স্পষ্ট লক্ষ্য ঠিক করুন। দুই, প্রতিদিন কাজ করুন। তিন, ভুল থেকে শিখুন। চার, ধৈর্য ধরুন। পাঁচ, নিজের ওপর বিশ্বাস রাখুন। আজ থেকেই শুরু করুন! পেজটি ফলো বা সাবস্ক্রাইব করুন।" \
+            --write-media voiceover.mp3 \
+            --write-subtitles subtitles.srt
+          if [ -f "build_assets_zip.py" ]; then python3 build_assets_zip.py; fi
+
+      - name: Install Puppeteer & Render 1080x1920 MP4
+        run: |
+          npm install puppeteer
+          node render_video.js
+
+      - name: Upload Final MP4, SRT & Asset ZIP Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Success-5-Steps-Bangla-Reel
+          path: |
+            success_5_steps_reel.mp4
+            voiceover.mp3
+            subtitles.srt
+            success_5_steps_assets.zip
